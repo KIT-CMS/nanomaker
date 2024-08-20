@@ -1,3 +1,10 @@
+# NanoMaker specific files / folders
+cmssw_checkouts/
+logs/
+data/
+tarballs/
+.law/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
