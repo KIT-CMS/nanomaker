@@ -22,6 +22,4 @@ def read_filelist_from_das(nick, dasname, outputfile, era, type, xootd_prefix):
         "sample_type": type,
         "filelist": [f"{xootd_prefix}/{file}" for file in filedict.keys()],
     }
-    # write the json to the output file
-    with open(outputfile, "w") as outfile:
-        json.dump(data, outfile, indent=4)
+    return data
