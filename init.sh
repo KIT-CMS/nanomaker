@@ -123,5 +123,9 @@ action() {
             return 1
         fi
     fi
+    function monitor_production () {
+        # Parse all user arguments and pass them to the python script
+        python3 scripts/ProductionStatus.py $@
+    }
 }
 action "$@"
