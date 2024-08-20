@@ -22,6 +22,8 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
     sample_type = luigi.Parameter()
     era = luigi.Parameter()
     production_tag = luigi.Parameter()
+    install_dir = luigi.Parameter()
+    cmsdriver_command = luigi.Parameter()
     files_per_task = luigi.IntParameter()
     cmssw_version = luigi.Parameter()
 
@@ -107,7 +109,7 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
             self,
             install_dir=self.install_dir,
             cmssw_version=self.cmssw_version,
-            cmsrun_command=self.cmsrun_command,
+            cmsdriver_command=self.cmsdriver_command,
             production_tag=self.production_tag,
             htcondor_request_cpus=self.htcondor_request_cpus,
         )
@@ -128,7 +130,7 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
             self,
             install_dir=self.install_dir,
             cmssw_version=self.cmssw_version,
-            cmsrun_command=self.cmsrun_command,
+            cmsrun_command=self.cmsdriver_command,
             production_tag=self.production_tag,
             htcondor_request_cpus=self.htcondor_request_cpus,
         )
@@ -139,6 +141,7 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
         branchcounter = 0
         dataset = ConfigureDatasets(
             nick=self.nick,
+            dasname=self.dasname,
             production_tag=self.production_tag,
             era=self.era,
             sample_type=self.sample_type,

@@ -52,7 +52,7 @@ class ProduceNanoAOD(WrapperTask):
 
         requirements = {}
         for sample in data:
-            requirements[f"CMSSW_{sample["nick"]}"] = RunCMSSW(
+            requirements[f"CMSSW_{sample['nick']}"] = RunCMSSW(
                 nick=sample["nick"],
                 dasname=sample["dasname"],
                 production_tag=self.production_tag,
