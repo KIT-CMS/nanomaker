@@ -1,0 +1,6 @@
+[submodule "kingmaker-images"]
+	path = kingmaker-images
+	url = git@github.com:KIT-CMS/kingmaker-images.git
+[submodule "law"]
+	path = law
+	url = git@github.com:riga/law.git
