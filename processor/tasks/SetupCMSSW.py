@@ -4,6 +4,7 @@ from framework import console
 from framework import Task
 import tarfile
 import shutil
+from helpers.helpers import create_abspath
 
 
 class SetupCMSSW(Task):
@@ -21,7 +22,7 @@ class SetupCMSSW(Task):
     def output(self):
         # sort the sample types and eras to have a unique string for the tarball
         target = self.remote_target(
-            f"cmssw_{self.cmssw_version}_{self.production_tag}.tar.gz"
+            f"{self.cmssw_version}_{self.production_tag}.tar.gz"
         )
         return target
 
@@ -33,14 +34,16 @@ class SetupCMSSW(Task):
         # also use the tag for the local tarball creation
         tag = self.production_tag
         install_dir = os.path.join(str(self.install_dir), tag)
+        run_script_path = os.path.join(install_dir, cmssw_version, "src")
+        create_abspath(install_dir)
         setup_script = os.path.join(
             str(os.path.abspath("processor")), "tasks", "scripts", "setup_cmssw.sh"
         )
-        tarball = os.path.join(install_dir, output.basename)
+        tarball = os.path.join(os.path.abspath(install_dir), output.basename)
         # setup cmssw, compile, generate cmsrun config and build the tarball
         if not self.cmsrun_script:
             run_cmsDriver = True
-            cmsdriver_command = self.cmsdriver_command
+            cmsdriver_command = f"'{self.cmsdriver_command}'"
             cms_run_config = "nano_config.py"
         else:
             run_cmsDriver = False
@@ -57,7 +60,7 @@ class SetupCMSSW(Task):
             setup_script,
             cmssw_version,  # cmssw_version=$1
         ]
-        self.run_command_readable(command)
+        self.run_command_readable(command, run_location=install_dir)
         # generate the cmsrun config
         if run_cmsDriver:
             cms_run_script = os.path.join(
@@ -73,33 +76,24 @@ class SetupCMSSW(Task):
                 cmsdriver_command,  # cmsdriver_command=$2
                 threads,  # threads=$3
             ]
-            self.run_command_readable(command)
+            self.run_command_readable(command, run_location=run_script_path)
         else:
             # copy the cmsrun script to the install dir
-            shutil.copy(self.cmsrun_script, install_dir)
+            shutil.copy(self.cmsrun_script, run_script_path)
         # add some additional lines to the end of cms_run_config
-        additional_lines = """
-            import FWCore.ParameterSet.VarParsing as VarParsing
-
-            options = VarParsing.VarParsing("analysis")
-            options.inputFiles = "inputfile_1.root", "inputfile_2.root"
-            options.maxEvents = -1
-            options.parseArguments()
-
-            process.source = cms.Source(
-                "PoolSource",
-                fileNames=cms.untracked.vstring(options.inputFiles),
-                secondaryFileNames=cms.untracked.vstring(),
-            )
-
-            process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(options.maxEvents))
-            """
-        with open(os.path.join(install_dir, cms_run_config), "a") as f:
+        additional_lines_file = os.path.join(
+            str(os.path.abspath("processor")),
+            "tasks",
+            "scripts",
+            "cmssw_additional_lines.txt",
+        )
+        with open(additional_lines_file, "r") as f:
+            additional_lines = f.read()
+        with open(os.path.join(run_script_path, cms_run_config), "a") as f:
             f.write(additional_lines)
         # create tarball with compiled CMSSW folder and the cmsrun config
         with tarfile.open(tarball, "w:gz") as tar:
-            tar.add(os.path.join(install_dir, f"CMSSW_{cmssw_version}"))
-            tar.add(os.path.join(install_dir, cms_run_config))
+            tar.add(os.path.join(install_dir, cmssw_version))
             tar.add(
                 os.path.join(
                     str(os.path.abspath("processor")),
@@ -108,6 +102,8 @@ class SetupCMSSW(Task):
                     "source_cmssw.sh",
                 )
             )
-        console.rule("Finished CMSSW setup")
+
         # upload an small file to signal that the build is done
+        console.log(f"Uploading local tarball {tarball} to {output.uri()}")
         output.copy_from_local(tarball)
+        console.rule("Finished CMSSW setup")

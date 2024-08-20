@@ -1,0 +1,14 @@
+import FWCore.ParameterSet.VarParsing as VarParsing
+
+options = VarParsing.VarParsing("analysis")
+options.inputFiles = "inputfile_1.root", "inputfile_2.root"
+options.maxEvents = -1
+options.parseArguments()
+
+process.source = cms.Source(
+    "PoolSource",
+    fileNames=cms.untracked.vstring(options.inputFiles),
+    secondaryFileNames=cms.untracked.vstring(),
+)
+
+process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(options.maxEvents))
