@@ -13,7 +13,12 @@ def read_filelist_from_das(nick, dasname, outputfile, era, type, xootd_prefix):
     jsonS = output.communicate()[0]
     filelist = json.loads(jsonS)
     for file in filelist:
-        filedict[file["file"][0]["name"]] = file["file"][0]["nevents"]
+        try:
+            filedict[file["file"][0]["name"]] = file["file"][0]["nevents"]
+        except KeyError:
+            print(
+                f"Failed to get sample information from DAS for {nick}, is DAS down or your DASname {dasname} wrong ?"
+            )
     data = {
         "nick": nick,
         "nfiles": len(filedict.keys()),

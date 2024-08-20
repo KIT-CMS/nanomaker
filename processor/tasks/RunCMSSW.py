@@ -130,7 +130,7 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
             self,
             install_dir=self.install_dir,
             cmssw_version=self.cmssw_version,
-            cmsrun_command=self.cmsdriver_command,
+            cmsdriver_command=self.cmsdriver_command,
             production_tag=self.production_tag,
             htcondor_request_cpus=self.htcondor_request_cpus,
         )
@@ -189,6 +189,7 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
         base_workdir = os.path.abspath("workdir")
         create_abspath(base_workdir)
         workdir = os.path.join(base_workdir, f"{self.production_tag}")
+        cmssw_dir = os.path.join(workdir, self.cmssw_version, "src")
         create_abspath(workdir)
         inputfiles = branch_data["files"]
         tarball = self.input()["tarball"]
@@ -196,14 +197,29 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
         with tarball.localize("r") as _file:
             tarballpath = _file.path
         # first unpack the tarball if the exec is not there yet
+        console.log(f"Unpacking tarball {tarballpath} to {workdir}")
+        if not os.path.exists(tarballpath):
+            raise Exception(f"Tarball {tarballpath} does not exist")
         tar = tarfile.open(tarballpath, "r:gz")
         tar.extractall(workdir)
+        tar.close()
+        console.log(
+            "content of workdir after unpacking: {}".format(os.listdir(workdir))
+        )
         # test running the source command
         console.rule("Source CMSSW environment")
+        # print the content of the {workdir}/{self.cmssw_version}/src/ directory
+        os.listdir(cmssw_dir)
         # set environment using env script
-        my_env = self.set_environment(f"{workdir}/source_cmssw.sh {self.cmssw_version}")
+        my_env = self.set_environment(os.path.join(cmssw_dir, "source_cmssw.sh"))
+        run_script = os.path.join(cmssw_dir, "cmssw_command.sh")
         input_files = [f"inputFiles={x}" for x in inputfiles]
-        cmssw_command = ["cmsRun", "nano_config.py"] + input_files
+        with open(run_script, "w") as f:
+            f.write("eval $(scram runtime -sh)\n")
+            f.write(f"cmsRun nano_config.py {' '.join(input_files)}\n")
+        # make the script executable
+        os.chmod(run_script, 0o755)
+        cmssw_command = ["bash", run_script]
         # actual payload:
         console.rule("Starting CMSSW")
         console.log("Command: {}".format(cmssw_command))
@@ -214,7 +230,7 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
             bufsize=1,
             universal_newlines=True,
             env=my_env,
-            cwd=workdir,
+            cwd=cmssw_dir,
         ) as p:
             for line in p.stdout:
                 if line != "\n":
@@ -228,8 +244,8 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
             raise Exception("cmssw failed")
         else:
             console.log("Successful")
-        console.log("Output files afterwards: {}".format(os.listdir(workdir)))
+        console.log("Output files afterwards: {}".format(os.listdir(cmssw_dir)))
         outputfile.parent.touch()
-        local_filename = os.path.join(workdir, "nanoAOD.root")
+        local_filename = os.path.join(cmssw_dir, "nanoAOD.root")
         outputfile.copy_from_local(local_filename)
         console.rule("Finished CMSSW")
