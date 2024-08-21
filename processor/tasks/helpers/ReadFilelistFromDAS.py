@@ -25,6 +25,6 @@ def read_filelist_from_das(nick, dasname, outputfile, era, type, xootd_prefix):
         "nevents": sum(filedict.values()),
         "era": era,
         "sample_type": type,
-        "filelist": [f"{xootd_prefix}/{file}" for file in filedict.keys()],
+        "filelist": [f"{file}" for file in filedict.keys()],
     }
     return data

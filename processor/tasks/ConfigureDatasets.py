@@ -36,15 +36,28 @@ class ConfigureDatasets(Task):
         output.parent.touch()
         if not output.exists():
             output.parent.touch()
-            xootd_prefix = "root://cms-xrd-global.cern.ch/"
-            sample_data = read_filelist_from_das(
-                self.nick,
-                self.dasname,
-                output,
-                self.era,
-                self.sample_type,
-                xootd_prefix,
+            # check if the file exists locally
+            local_filepath = os.path.abspath(
+                os.path.join(
+                    "sample_database", self.era, self.sample_type, f"{self.nick}.json"
+                )
             )
+            if not os.path.exists(local_filepath):
+                ensure_dir(local_filepath)
+                xootd_prefix = "root://cms-xrd-global.cern.ch/"
+                sample_data = read_filelist_from_das(
+                    self.nick,
+                    self.dasname,
+                    output,
+                    self.era,
+                    self.sample_type,
+                    xootd_prefix,
+                )
+                with open(local_filepath, "w") as f:
+                    json.dump(sample_data, f, indent=4)
+            else:
+                with open(local_filepath, "r") as f:
+                    sample_data = json.load(f)
             console.log()
             if not self.silent:
                 console.log("Sample: {}".format(self.nick))
