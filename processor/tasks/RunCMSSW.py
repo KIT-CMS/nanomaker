@@ -203,19 +203,17 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
         tar = tarfile.open(tarballpath, "r:gz")
         tar.extractall(workdir)
         tar.close()
-        console.log(
-            "content of workdir after unpacking: {}".format(os.listdir(workdir))
-        )
-        # test running the source command
-        console.rule("Source CMSSW environment")
-        # print the content of the {workdir}/{self.cmssw_version}/src/ directory
-        os.listdir(cmssw_dir)
-        # set environment using env script
-        my_env = self.set_environment(os.path.join(cmssw_dir, "source_cmssw.sh"))
+        # now we can run the CMSSW
         run_script = os.path.join(cmssw_dir, "cmssw_command.sh")
         input_files = [f"inputFiles={x}" for x in inputfiles]
         with open(run_script, "w") as f:
+            f.write("export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch\n")
+            f.write("source $VO_CMS_SW_DIR/cmsset_default.sh\n")
+            f.write(
+                "export X509_CERT_DIR=/cvmfs/grid.cern.ch/etc/grid-security/certificates\n"
+            )
             f.write("eval $(scram runtime -sh)\n")
+            f.write('echo "Using X509_USER_PROXY: $X509_USER_PROXY"\n')
             f.write(f"cmsRun nano_config.py {' '.join(input_files)}\n")
         # make the script executable
         os.chmod(run_script, 0o755)
@@ -229,15 +227,14 @@ class RunCMSSW(HTCondorWorkflow, law.LocalWorkflow):
             stderr=subprocess.PIPE,
             bufsize=1,
             universal_newlines=True,
-            env=my_env,
             cwd=cmssw_dir,
         ) as p:
             for line in p.stdout:
                 if line != "\n":
-                    console.log(line.replace("\n", ""))
+                    console.print(line.replace("\n", ""))
             for line in p.stderr:
                 if line != "\n":
-                    console.log("stderr: {}".format(line.replace("\n", "")))
+                    console.print("stderr: {}".format(line.replace("\n", "")))
         if p.returncode != 0:
             console.log(f"Error when running {cmssw_command}")
             console.log("cmssw returned non-zero exit status {}".format(p.returncode))

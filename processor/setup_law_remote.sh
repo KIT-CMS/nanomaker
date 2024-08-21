@@ -15,6 +15,7 @@ action() {
     export USER={{USER}}
     export LUIGIPORT={{LUIGIPORT}}
     export X509_CERT_DIR=/cvmfs/grid.cern.ch/etc/grid-security/certificates
+    export GRID_SECURITY_DIR=/cvmfs/grid.cern.ch/etc/grid-security/certificates
     export X509_VOMS_DIR=/cvmfs/grid.cern.ch/etc/grid-security/vomsdir
     export XRD_WORKERTHREADS={{NTHREADS}}
     export XRD_PARALLELEVTLOOP={{NTHREADS}}
