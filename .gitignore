@@ -1,4 +1,6 @@
 # NanoMaker specific files / folders
+workdir/
+sample_database/
 cmssw_checkouts/
 logs/
 data/
