@@ -91,16 +91,6 @@ class SetupCMSSW(Task):
             additional_lines = f.read()
         with open(os.path.join(run_script_path, cms_run_config), "a") as f:
             f.write(additional_lines)
-        # copy the source script to the install dir
-        shutil.copy(
-            os.path.join(
-                str(os.path.abspath("processor")),
-                "tasks",
-                "scripts",
-                "source_cmssw.sh",
-            ),
-            run_script_path,
-        )
         # create tarball with compiled CMSSW folder and the cmsrun config
         with tarfile.open(tarball, "w:gz") as tar:
             tar.add(install_dir, arcname=".")
