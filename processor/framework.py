@@ -373,11 +373,7 @@ class HTCondorWorkflow(Task, law.htcondor.HTCondorWorkflow):
 
     def htcondor_create_job_manager(self, **kwargs):
         kwargs = merge_dicts(self.htcondor_job_manager_defaults, kwargs)
-        # disable job group submission see: https://github.com/riga/law/issues/183
-        job_manager = super().htcondor_create_job_manager(**kwargs)
-        job_manager.job_grouping_submit = False
-        job_manager.chunk_size_submit = 0
-        return job_manager
+        return HTCondorJobManager(**kwargs)
 
     def htcondor_output_directory(self):
         # Add identification-str to prevent interference between different tasks of the same class
