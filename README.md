@@ -112,5 +112,7 @@ where `${production_tag}` is the tag of the production, `${era}` is the era of t
 The main command to run NanoMaker is:
 
 ```bash
-law run ProduceNanoAOD --sampledict path/to/your/sampledict/yaml --production-tag your_production_tag
+law run ProduceNanoAOD --sampledict path/to/your/sampledict/yaml --production-tag your_production_tag --workers number_of_workers
 ```
+
+The `number_of_workers` parameter should be set to the number of samples you want to have submitted in parallel. Each worker will be responsible for submitting one sample at a time. The `production-tag` is a tag that will be used to create the output directory structure. The `sampledict` is the path to the yaml file with the samples to be processed.
