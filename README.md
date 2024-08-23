@@ -7,7 +7,7 @@ NanoMaker is a law-based workflow that can be used to generate NanoAOD files fro
 First clone the repository:
 
 ```bash
-git clone --recursive git@github.com:harrypuuter/nanomaker.git
+git clone --recursive git@github.com:KIT-CMS/nanomaker.git
 ```
 
 Then run the initialization script:
